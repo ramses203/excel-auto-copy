@@ -18,7 +18,7 @@ class ExcelAutoCopyApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Excel Auto Copy Tool")
-        self.root.geometry("650x620")
+        self.root.geometry("650x680")
         self.root.resizable(False, False)
         
         # 강제로 라이트 모드 설정
@@ -30,6 +30,8 @@ class ExcelAutoCopyApp:
         
         self.source_file = ""
         self.target_file = ""
+        self.source_sheets = []
+        self.target_sheets = []
         self.is_running = False
         
         self.setup_ui()
@@ -91,6 +93,13 @@ class ExcelAutoCopyApp:
             borderwidth=1
         ).pack(side=tk.LEFT)
         
+        # Source 시트 선택
+        source_sheet_frame = tk.Frame(main_frame, bg='#FFFFFF')
+        source_sheet_frame.pack(fill=tk.X, pady=5)
+        tk.Label(source_sheet_frame, text="Source Sheet:", width=12, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.source_sheet_combo = ttk.Combobox(source_sheet_frame, width=37, state='disabled')
+        self.source_sheet_combo.pack(side=tk.LEFT, padx=5)
+        
         # Target 파일 선택
         target_frame = tk.Frame(main_frame, bg='#FFFFFF')
         target_frame.pack(fill=tk.X, pady=5)
@@ -117,6 +126,13 @@ class ExcelAutoCopyApp:
             relief=tk.RAISED,
             borderwidth=1
         ).pack(side=tk.LEFT)
+        
+        # Target 시트 선택
+        target_sheet_frame = tk.Frame(main_frame, bg='#FFFFFF')
+        target_sheet_frame.pack(fill=tk.X, pady=5)
+        tk.Label(target_sheet_frame, text="Target Sheet:", width=12, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.target_sheet_combo = ttk.Combobox(target_sheet_frame, width=37, state='disabled')
+        self.target_sheet_combo.pack(side=tk.LEFT, padx=5)
         
         # 옵션 프레임
         option_frame = tk.LabelFrame(main_frame, text="Options", padx=10, pady=10, bg='#FFFFFF', fg='#000000')
@@ -261,6 +277,19 @@ class ExcelAutoCopyApp:
         )
         self.stop_button.pack(side=tk.LEFT, padx=5)
     
+    def get_sheet_names(self, file_path):
+        """엑셀 파일의 시트 이름 목록 가져오기"""
+        try:
+            if file_path.lower().endswith('.xls'):
+                xls_book = xlrd.open_workbook(file_path)
+                return xls_book.sheet_names()
+            else:
+                wb = openpyxl.load_workbook(file_path, read_only=True, data_only=True)
+                return wb.sheetnames
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to read sheets: {str(e)}")
+            return []
+    
     def select_source_file(self):
         filename = filedialog.askopenfilename(
             title="Select Source Excel File",
@@ -269,6 +298,13 @@ class ExcelAutoCopyApp:
         if filename:
             self.source_file = filename
             self.source_label.config(text=os.path.basename(filename))
+            
+            # 시트 목록 가져오기
+            self.source_sheets = self.get_sheet_names(filename)
+            if self.source_sheets:
+                self.source_sheet_combo['values'] = self.source_sheets
+                self.source_sheet_combo.set(self.source_sheets[0])
+                self.source_sheet_combo.config(state='readonly')
     
     def select_target_file(self):
         filename = filedialog.askopenfilename(
@@ -278,6 +314,13 @@ class ExcelAutoCopyApp:
         if filename:
             self.target_file = filename
             self.target_label.config(text=os.path.basename(filename))
+            
+            # 시트 목록 가져오기
+            self.target_sheets = self.get_sheet_names(filename)
+            if self.target_sheets:
+                self.target_sheet_combo['values'] = self.target_sheets
+                self.target_sheet_combo.set(self.target_sheets[0])
+                self.target_sheet_combo.config(state='readonly')
     
     def start_copy(self):
         if not self.source_file or not self.target_file:
@@ -311,12 +354,15 @@ class ExcelAutoCopyApp:
                 num = num * 26 + (ord(c) - ord('A')) + 1
         return num
     
-    def load_excel_file(self, file_path, read_only=False):
+    def load_excel_file(self, file_path, sheet_name=None, read_only=False):
         """엑셀 파일 로드 (.xls와 .xlsx 모두 지원)"""
         if file_path.lower().endswith('.xls'):
             # 구 형식 (.xls) - xlrd로 읽고 openpyxl로 변환
             xls_book = xlrd.open_workbook(file_path)
-            xls_sheet = xls_book.sheet_by_index(0)
+            if sheet_name:
+                xls_sheet = xls_book.sheet_by_name(sheet_name)
+            else:
+                xls_sheet = xls_book.sheet_by_index(0)
             
             # openpyxl 워크북으로 변환
             wb = Workbook()
@@ -330,17 +376,22 @@ class ExcelAutoCopyApp:
         else:
             # 신 형식 (.xlsx)
             wb = openpyxl.load_workbook(file_path, data_only=read_only)
-            ws = wb.active
+            if sheet_name and sheet_name in wb.sheetnames:
+                ws = wb[sheet_name]
+            else:
+                ws = wb.active
             return wb, ws
     
     def copy_process(self):
         try:
             # 엑셀 파일 로드
             self.update_progress("Loading source file...", 0)
-            source_wb, source_ws = self.load_excel_file(self.source_file, read_only=True)
+            source_sheet = self.source_sheet_combo.get() if self.source_sheet_combo.get() else None
+            source_wb, source_ws = self.load_excel_file(self.source_file, sheet_name=source_sheet, read_only=True)
             
             self.update_progress("Loading target file...", 5)
-            target_wb, target_ws = self.load_excel_file(self.target_file, read_only=False)
+            target_sheet = self.target_sheet_combo.get() if self.target_sheet_combo.get() else None
+            target_wb, target_ws = self.load_excel_file(self.target_file, sheet_name=target_sheet, read_only=False)
             
             # Source 데이터 읽기
             source_start_row = self.source_start_row_var.get()
