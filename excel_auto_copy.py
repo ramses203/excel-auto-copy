@@ -16,7 +16,7 @@ class ExcelAutoCopyApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Excel Auto Copy Tool")
-        self.root.geometry("600x520")
+        self.root.geometry("650x620")
         self.root.resizable(False, False)
         
         # 강제로 라이트 모드 설정
@@ -124,36 +124,70 @@ class ExcelAutoCopyApp:
         source_range_frame = tk.Frame(option_frame, bg='#FFFFFF')
         source_range_frame.pack(fill=tk.X, pady=5)
         tk.Label(source_range_frame, text="Source Rows:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
-        self.source_start_var = tk.IntVar(value=1)
+        self.source_start_row_var = tk.IntVar(value=1)
         tk.Spinbox(
             source_range_frame, 
             from_=1, 
             to=100000, 
-            textvariable=self.source_start_var,
+            textvariable=self.source_start_row_var,
             width=8
         ).pack(side=tk.LEFT)
         tk.Label(source_range_frame, text="~", padx=5, bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
-        self.source_end_var = tk.IntVar(value=727)
+        self.source_end_row_var = tk.IntVar(value=727)
         tk.Spinbox(
             source_range_frame, 
             from_=1, 
             to=100000, 
-            textvariable=self.source_end_var,
+            textvariable=self.source_end_row_var,
             width=8
         ).pack(side=tk.LEFT)
         
+        # Source 열 범위 설정
+        source_col_frame = tk.Frame(option_frame, bg='#FFFFFF')
+        source_col_frame.pack(fill=tk.X, pady=5)
+        tk.Label(source_col_frame, text="Source Columns:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.source_start_col_var = tk.StringVar(value="A")
+        tk.Entry(
+            source_col_frame,
+            textvariable=self.source_start_col_var,
+            width=5,
+            justify=tk.CENTER
+        ).pack(side=tk.LEFT, padx=2)
+        tk.Label(source_col_frame, text="~", padx=5, bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.source_end_col_var = tk.StringVar(value="Z")
+        tk.Entry(
+            source_col_frame,
+            textvariable=self.source_end_col_var,
+            width=5,
+            justify=tk.CENTER
+        ).pack(side=tk.LEFT, padx=2)
+        tk.Label(source_col_frame, text="(e.g., A, B, C ... Z, AA, AB)", font=("Arial", 8), bg='#FFFFFF', fg='#666666').pack(side=tk.LEFT, padx=5)
+        
         # Target 시작 행 설정
-        target_start_frame = tk.Frame(option_frame, bg='#FFFFFF')
-        target_start_frame.pack(fill=tk.X, pady=5)
-        tk.Label(target_start_frame, text="Target Start Row:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
-        self.target_start_var = tk.IntVar(value=1)
+        target_start_row_frame = tk.Frame(option_frame, bg='#FFFFFF')
+        target_start_row_frame.pack(fill=tk.X, pady=5)
+        tk.Label(target_start_row_frame, text="Target Start Row:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.target_start_row_var = tk.IntVar(value=1)
         tk.Spinbox(
-            target_start_frame, 
+            target_start_row_frame, 
             from_=1, 
             to=100000, 
-            textvariable=self.target_start_var,
+            textvariable=self.target_start_row_var,
             width=10
         ).pack(side=tk.LEFT)
+        
+        # Target 시작 열 설정
+        target_start_col_frame = tk.Frame(option_frame, bg='#FFFFFF')
+        target_start_col_frame.pack(fill=tk.X, pady=5)
+        tk.Label(target_start_col_frame, text="Target Start Column:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
+        self.target_start_col_var = tk.StringVar(value="A")
+        tk.Entry(
+            target_start_col_frame,
+            textvariable=self.target_start_col_var,
+            width=5,
+            justify=tk.CENTER
+        ).pack(side=tk.LEFT, padx=2)
+        tk.Label(target_start_col_frame, text="(e.g., A, C, D)", font=("Arial", 8), bg='#FFFFFF', fg='#666666').pack(side=tk.LEFT, padx=5)
         
         # 반복 횟수 설정
         repeat_frame = tk.Frame(option_frame, bg='#FFFFFF')
@@ -267,6 +301,14 @@ class ExcelAutoCopyApp:
         self.is_running = False
         self.progress_label.config(text="Stopping...")
     
+    def col_to_num(self, col_str):
+        """열 문자(A, B, AA)를 숫자로 변환"""
+        num = 0
+        for c in col_str.upper():
+            if c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                num = num * 26 + (ord(c) - ord('A')) + 1
+        return num
+    
     def copy_process(self):
         try:
             # 엑셀 파일 로드
@@ -279,25 +321,36 @@ class ExcelAutoCopyApp:
             target_ws = target_wb.active
             
             # Source 데이터 읽기
-            source_start = self.source_start_var.get()
-            source_end = self.source_end_var.get()
+            source_start_row = self.source_start_row_var.get()
+            source_end_row = self.source_end_row_var.get()
+            source_start_col = self.col_to_num(self.source_start_col_var.get())
+            source_end_col = self.col_to_num(self.source_end_col_var.get())
             
             # 범위 검증
-            if source_start > source_end:
-                raise Exception(f"Source start row ({source_start}) cannot be greater than end row ({source_end})!")
+            if source_start_row > source_end_row:
+                raise Exception(f"Source start row ({source_start_row}) cannot be greater than end row ({source_end_row})!")
+            if source_start_col > source_end_col:
+                raise Exception(f"Source start column cannot be greater than end column!")
             
-            source_rows = list(source_ws.iter_rows(min_row=source_start, max_row=source_end))
+            source_rows = list(source_ws.iter_rows(
+                min_row=source_start_row, 
+                max_row=source_end_row,
+                min_col=source_start_col,
+                max_col=source_end_col
+            ))
             total_source_rows = len(source_rows)
             
             if total_source_rows == 0:
                 raise Exception("No data found in source file!")
             
             repeat_count = self.repeat_var.get()
-            target_start_row = self.target_start_var.get()
+            target_start_row = self.target_start_row_var.get()
+            target_start_col = self.col_to_num(self.target_start_col_var.get())
             total_operations = total_source_rows * repeat_count
             
+            source_col_str = f"{self.source_start_col_var.get()}~{self.source_end_col_var.get()}"
             self.update_progress(
-                f"Processing rows {source_start}~{source_end} ({total_source_rows} rows) × {repeat_count} times...", 
+                f"Processing {source_col_str} cols, rows {source_start_row}~{source_end_row} ({total_source_rows} rows) × {repeat_count} times...", 
                 10
             )
             
@@ -315,8 +368,9 @@ class ExcelAutoCopyApp:
                         break
                     
                     # 각 셀 복사
-                    for col_idx, source_cell in enumerate(source_row_cells, start=1):
-                        target_cell = target_ws.cell(row=target_row, column=col_idx)
+                    for col_offset, source_cell in enumerate(source_row_cells):
+                        target_col = target_start_col + col_offset
+                        target_cell = target_ws.cell(row=target_row, column=target_col)
                         
                         # 값 복사
                         target_cell.value = source_cell.value
@@ -356,8 +410,8 @@ class ExcelAutoCopyApp:
             messagebox.showinfo(
                 "Success", 
                 f"Copy completed successfully!\n\n"
-                f"Source: Rows {source_start}~{source_end} ({total_source_rows} rows)\n"
-                f"Target: Starting from row {target_start_row}\n"
+                f"Source: Cols {source_col_str}, Rows {source_start_row}~{source_end_row} ({total_source_rows} rows)\n"
+                f"Target: Starting from col {self.target_start_col_var.get()}, row {target_start_row}\n"
                 f"Total rows copied: {completed}\n"
                 f"Target file: {os.path.basename(self.target_file)}"
             )
