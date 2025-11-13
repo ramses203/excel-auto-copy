@@ -19,6 +19,13 @@ class ExcelAutoCopyApp:
         self.root.geometry("600x520")
         self.root.resizable(False, False)
         
+        # 강제로 라이트 모드 설정
+        self.root.configure(bg='#FFFFFF')
+        
+        # ttk 스타일 설정
+        style = ttk.Style()
+        style.theme_use('default')
+        
         self.source_file = ""
         self.target_file = ""
         self.is_running = False
@@ -27,17 +34,16 @@ class ExcelAutoCopyApp:
     
     def setup_ui(self):
         # 메인 프레임
-        main_frame = tk.Frame(self.root, padx=20, pady=20, bg='white')
+        main_frame = tk.Frame(self.root, padx=20, pady=20, bg='#FFFFFF')
         main_frame.pack(fill=tk.BOTH, expand=True)
-        self.root.configure(bg='white')
         
         # 제목
         title_label = tk.Label(
             main_frame, 
             text="Excel Auto Copy Tool", 
             font=("Arial", 16, "bold"),
-            bg='white',
-            fg='black'
+            bg='#FFFFFF',
+            fg='#000000'
         )
         title_label.pack(pady=(0, 20))
         
@@ -51,21 +57,21 @@ class ExcelAutoCopyApp:
             text=desc_text, 
             font=("Arial", 9),
             justify=tk.LEFT,
-            bg='white',
-            fg='black'
+            bg='#FFFFFF',
+            fg='#000000'
         )
         desc_label.pack(pady=(0, 15))
         
         # Source 파일 선택
-        source_frame = tk.Frame(main_frame, bg='white')
+        source_frame = tk.Frame(main_frame, bg='#FFFFFF')
         source_frame.pack(fill=tk.X, pady=5)
         
-        tk.Label(source_frame, text="Source Excel:", width=12, anchor="w", bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(source_frame, text="Source Excel:", width=12, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.source_label = tk.Label(
             source_frame, 
             text="파일을 선택하세요", 
             bg="#f0f0f0",
-            fg='black',
+            fg='#000000',
             anchor="w",
             relief=tk.SUNKEN,
             width=40
@@ -78,15 +84,15 @@ class ExcelAutoCopyApp:
         ).pack(side=tk.LEFT)
         
         # Target 파일 선택
-        target_frame = tk.Frame(main_frame, bg='white')
+        target_frame = tk.Frame(main_frame, bg='#FFFFFF')
         target_frame.pack(fill=tk.X, pady=5)
         
-        tk.Label(target_frame, text="Target Excel:", width=12, anchor="w", bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(target_frame, text="Target Excel:", width=12, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.target_label = tk.Label(
             target_frame, 
             text="파일을 선택하세요", 
             bg="#f0f0f0",
-            fg='black',
+            fg='#000000',
             anchor="w",
             relief=tk.SUNKEN,
             width=40
@@ -99,13 +105,13 @@ class ExcelAutoCopyApp:
         ).pack(side=tk.LEFT)
         
         # 옵션 프레임
-        option_frame = tk.LabelFrame(main_frame, text="Options", padx=10, pady=10, bg='white', fg='black')
+        option_frame = tk.LabelFrame(main_frame, text="Options", padx=10, pady=10, bg='#FFFFFF', fg='#000000')
         option_frame.pack(fill=tk.X, pady=20)
         
         # Source 행 범위 설정
-        source_range_frame = tk.Frame(option_frame, bg='white')
+        source_range_frame = tk.Frame(option_frame, bg='#FFFFFF')
         source_range_frame.pack(fill=tk.X, pady=5)
-        tk.Label(source_range_frame, text="Source Rows:", width=20, anchor="w", bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(source_range_frame, text="Source Rows:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.source_start_var = tk.IntVar(value=1)
         tk.Spinbox(
             source_range_frame, 
@@ -114,7 +120,7 @@ class ExcelAutoCopyApp:
             textvariable=self.source_start_var,
             width=8
         ).pack(side=tk.LEFT)
-        tk.Label(source_range_frame, text="~", padx=5, bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(source_range_frame, text="~", padx=5, bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.source_end_var = tk.IntVar(value=727)
         tk.Spinbox(
             source_range_frame, 
@@ -125,9 +131,9 @@ class ExcelAutoCopyApp:
         ).pack(side=tk.LEFT)
         
         # Target 시작 행 설정
-        target_start_frame = tk.Frame(option_frame, bg='white')
+        target_start_frame = tk.Frame(option_frame, bg='#FFFFFF')
         target_start_frame.pack(fill=tk.X, pady=5)
-        tk.Label(target_start_frame, text="Target Start Row:", width=20, anchor="w", bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(target_start_frame, text="Target Start Row:", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.target_start_var = tk.IntVar(value=1)
         tk.Spinbox(
             target_start_frame, 
@@ -138,9 +144,9 @@ class ExcelAutoCopyApp:
         ).pack(side=tk.LEFT)
         
         # 반복 횟수 설정
-        repeat_frame = tk.Frame(option_frame, bg='white')
+        repeat_frame = tk.Frame(option_frame, bg='#FFFFFF')
         repeat_frame.pack(fill=tk.X, pady=5)
-        tk.Label(repeat_frame, text="Repeat Count (per row):", width=20, anchor="w", bg='white', fg='black').pack(side=tk.LEFT)
+        tk.Label(repeat_frame, text="Repeat Count (per row):", width=20, anchor="w", bg='#FFFFFF', fg='#000000').pack(side=tk.LEFT)
         self.repeat_var = tk.IntVar(value=23)
         tk.Spinbox(
             repeat_frame, 
@@ -151,15 +157,15 @@ class ExcelAutoCopyApp:
         ).pack(side=tk.LEFT)
         
         # 진행 상황
-        progress_frame = tk.Frame(main_frame, bg='white')
+        progress_frame = tk.Frame(main_frame, bg='#FFFFFF')
         progress_frame.pack(fill=tk.X, pady=10)
         
         self.progress_label = tk.Label(
             progress_frame, 
             text="Ready", 
             font=("Arial", 9),
-            bg='white',
-            fg='black'
+            bg='#FFFFFF',
+            fg='#000000'
         )
         self.progress_label.pack()
         
@@ -171,7 +177,7 @@ class ExcelAutoCopyApp:
         self.progress_bar.pack(pady=5)
         
         # 실행 버튼
-        button_frame = tk.Frame(main_frame, bg='white')
+        button_frame = tk.Frame(main_frame, bg='#FFFFFF')
         button_frame.pack(pady=10)
         
         self.start_button = tk.Button(
