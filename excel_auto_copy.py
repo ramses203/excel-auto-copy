@@ -16,7 +16,7 @@ class ExcelAutoCopyApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Excel Auto Copy Tool")
-        self.root.geometry("600x450")
+        self.root.geometry("600x520")
         self.root.resizable(False, False)
         
         self.source_file = ""
@@ -40,8 +40,8 @@ class ExcelAutoCopyApp:
         
         # 설명
         desc_text = (
-            "Source Excel의 각 행을 Target Excel의 1~23행에 반복 복사합니다.\n"
-            "Source: 727행 → Target: 16,721행 (727 × 23)"
+            "Source Excel의 지정한 행 범위를 Target Excel에 반복 복사합니다.\n"
+            "예: Source 1~727행 → Target 1행부터 시작 × 23회 = 16,721행"
         )
         desc_label = tk.Label(
             main_frame, 
@@ -49,7 +49,7 @@ class ExcelAutoCopyApp:
             font=("Arial", 9),
             justify=tk.LEFT
         )
-        desc_label.pack(pady=(0, 20))
+        desc_label.pack(pady=(0, 15))
         
         # Source 파일 선택
         source_frame = tk.Frame(main_frame)
@@ -95,6 +95,41 @@ class ExcelAutoCopyApp:
         option_frame = tk.LabelFrame(main_frame, text="Options", padx=10, pady=10)
         option_frame.pack(fill=tk.X, pady=20)
         
+        # Source 행 범위 설정
+        source_range_frame = tk.Frame(option_frame)
+        source_range_frame.pack(fill=tk.X, pady=5)
+        tk.Label(source_range_frame, text="Source Rows:", width=20, anchor="w").pack(side=tk.LEFT)
+        self.source_start_var = tk.IntVar(value=1)
+        tk.Spinbox(
+            source_range_frame, 
+            from_=1, 
+            to=100000, 
+            textvariable=self.source_start_var,
+            width=8
+        ).pack(side=tk.LEFT)
+        tk.Label(source_range_frame, text="~", padx=5).pack(side=tk.LEFT)
+        self.source_end_var = tk.IntVar(value=727)
+        tk.Spinbox(
+            source_range_frame, 
+            from_=1, 
+            to=100000, 
+            textvariable=self.source_end_var,
+            width=8
+        ).pack(side=tk.LEFT)
+        
+        # Target 시작 행 설정
+        target_start_frame = tk.Frame(option_frame)
+        target_start_frame.pack(fill=tk.X, pady=5)
+        tk.Label(target_start_frame, text="Target Start Row:", width=20, anchor="w").pack(side=tk.LEFT)
+        self.target_start_var = tk.IntVar(value=1)
+        tk.Spinbox(
+            target_start_frame, 
+            from_=1, 
+            to=100000, 
+            textvariable=self.target_start_var,
+            width=10
+        ).pack(side=tk.LEFT)
+        
         # 반복 횟수 설정
         repeat_frame = tk.Frame(option_frame)
         repeat_frame.pack(fill=tk.X, pady=5)
@@ -103,21 +138,8 @@ class ExcelAutoCopyApp:
         tk.Spinbox(
             repeat_frame, 
             from_=1, 
-            to=100, 
+            to=1000, 
             textvariable=self.repeat_var,
-            width=10
-        ).pack(side=tk.LEFT)
-        
-        # 시작 행 설정 (Source)
-        start_frame = tk.Frame(option_frame)
-        start_frame.pack(fill=tk.X, pady=5)
-        tk.Label(start_frame, text="Source Start Row:", width=20, anchor="w").pack(side=tk.LEFT)
-        self.start_row_var = tk.IntVar(value=1)
-        tk.Spinbox(
-            start_frame, 
-            from_=1, 
-            to=10000, 
-            textvariable=self.start_row_var,
             width=10
         ).pack(side=tk.LEFT)
         
@@ -222,23 +244,30 @@ class ExcelAutoCopyApp:
             target_ws = target_wb.active
             
             # Source 데이터 읽기
-            source_start = self.start_row_var.get()
-            source_rows = list(source_ws.iter_rows(min_row=source_start))
+            source_start = self.source_start_var.get()
+            source_end = self.source_end_var.get()
+            
+            # 범위 검증
+            if source_start > source_end:
+                raise Exception(f"Source start row ({source_start}) cannot be greater than end row ({source_end})!")
+            
+            source_rows = list(source_ws.iter_rows(min_row=source_start, max_row=source_end))
             total_source_rows = len(source_rows)
             
             if total_source_rows == 0:
                 raise Exception("No data found in source file!")
             
             repeat_count = self.repeat_var.get()
+            target_start_row = self.target_start_var.get()
             total_operations = total_source_rows * repeat_count
             
             self.update_progress(
-                f"Processing {total_source_rows} rows × {repeat_count} times...", 
+                f"Processing rows {source_start}~{source_end} ({total_source_rows} rows) × {repeat_count} times...", 
                 10
             )
             
             # 복사 작업
-            target_row = 1
+            target_row = target_start_row
             completed = 0
             
             for source_idx, source_row_cells in enumerate(source_rows):
@@ -292,6 +321,8 @@ class ExcelAutoCopyApp:
             messagebox.showinfo(
                 "Success", 
                 f"Copy completed successfully!\n\n"
+                f"Source: Rows {source_start}~{source_end} ({total_source_rows} rows)\n"
+                f"Target: Starting from row {target_start_row}\n"
                 f"Total rows copied: {completed}\n"
                 f"Target file: {os.path.basename(self.target_file)}"
             )
