@@ -80,7 +80,13 @@ class ExcelAutoCopyApp:
         tk.Button(
             source_frame, 
             text="Browse", 
-            command=self.select_source_file
+            command=self.select_source_file,
+            bg="#2196F3",
+            fg="#FFFFFF",
+            activebackground="#1976D2",
+            activeforeground="#FFFFFF",
+            relief=tk.RAISED,
+            borderwidth=1
         ).pack(side=tk.LEFT)
         
         # Target 파일 선택
@@ -101,7 +107,13 @@ class ExcelAutoCopyApp:
         tk.Button(
             target_frame, 
             text="Browse", 
-            command=self.select_target_file
+            command=self.select_target_file,
+            bg="#2196F3",
+            fg="#FFFFFF",
+            activebackground="#1976D2",
+            activeforeground="#FFFFFF",
+            relief=tk.RAISED,
+            borderwidth=1
         ).pack(side=tk.LEFT)
         
         # 옵션 프레임
@@ -185,10 +197,14 @@ class ExcelAutoCopyApp:
             text="Start Copy",
             command=self.start_copy,
             bg="#4CAF50",
-            fg="white",
+            fg="#FFFFFF",
+            activebackground="#45a049",
+            activeforeground="#FFFFFF",
             font=("Arial", 12, "bold"),
             width=15,
-            height=2
+            height=2,
+            relief=tk.RAISED,
+            borderwidth=2
         )
         self.start_button.pack(side=tk.LEFT, padx=5)
         
@@ -197,11 +213,15 @@ class ExcelAutoCopyApp:
             text="Stop",
             command=self.stop_copy,
             bg="#f44336",
-            fg="white",
+            fg="#FFFFFF",
+            activebackground="#d32f2f",
+            activeforeground="#FFFFFF",
             font=("Arial", 12, "bold"),
             width=15,
             height=2,
-            state=tk.DISABLED
+            state=tk.DISABLED,
+            relief=tk.RAISED,
+            borderwidth=2
         )
         self.stop_button.pack(side=tk.LEFT, padx=5)
     
