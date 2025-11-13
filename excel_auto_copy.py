@@ -6,6 +6,8 @@ Excel Auto Copy Tool
 """
 
 import openpyxl
+import xlrd
+from openpyxl import Workbook
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import threading
@@ -309,16 +311,36 @@ class ExcelAutoCopyApp:
                 num = num * 26 + (ord(c) - ord('A')) + 1
         return num
     
+    def load_excel_file(self, file_path, read_only=False):
+        """엑셀 파일 로드 (.xls와 .xlsx 모두 지원)"""
+        if file_path.lower().endswith('.xls'):
+            # 구 형식 (.xls) - xlrd로 읽고 openpyxl로 변환
+            xls_book = xlrd.open_workbook(file_path)
+            xls_sheet = xls_book.sheet_by_index(0)
+            
+            # openpyxl 워크북으로 변환
+            wb = Workbook()
+            ws = wb.active
+            
+            for row_idx in range(xls_sheet.nrows):
+                for col_idx in range(xls_sheet.ncols):
+                    ws.cell(row=row_idx + 1, column=col_idx + 1).value = xls_sheet.cell_value(row_idx, col_idx)
+            
+            return wb, ws
+        else:
+            # 신 형식 (.xlsx)
+            wb = openpyxl.load_workbook(file_path, data_only=read_only)
+            ws = wb.active
+            return wb, ws
+    
     def copy_process(self):
         try:
             # 엑셀 파일 로드
             self.update_progress("Loading source file...", 0)
-            source_wb = openpyxl.load_workbook(self.source_file, data_only=True)
-            source_ws = source_wb.active
+            source_wb, source_ws = self.load_excel_file(self.source_file, read_only=True)
             
             self.update_progress("Loading target file...", 5)
-            target_wb = openpyxl.load_workbook(self.target_file)
-            target_ws = target_wb.active
+            target_wb, target_ws = self.load_excel_file(self.target_file, read_only=False)
             
             # Source 데이터 읽기
             source_start_row = self.source_start_row_var.get()
